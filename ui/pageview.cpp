@@ -198,6 +198,7 @@ public:
     KActionMenu * aViewMode;
     QVector<KAction *> aViewModeList;
     KToggleAction * aViewContinuous;
+    KToggleAction * aViewPresetReading;
     KToggleAction * aViewPresetBook;
     QAction * aPrevAction;
     KAction * aToggleForms;
@@ -309,6 +310,7 @@ PageView::PageView( QWidget *parent, Okular::Document *document )
     d->aZoomFitText = 0;
     d->aViewMode = 0;
     d->aViewContinuous = 0;
+    d->aViewPresetReading = 0;
     d->aViewPresetBook = 0;
     d->aPrevAction = 0;
     d->aToggleForms = 0;
@@ -499,7 +501,13 @@ do { \
     connect( d->aViewContinuous, SIGNAL(toggled(bool)), SLOT(slotContinuousToggled(bool)) );
     d->aViewContinuous->setChecked( Okular::Settings::viewContinuous() );
 
-    // Book view preset
+    // View Preset: Reading
+    d->aViewPresetReading  = new KToggleAction(KIcon( "page-simple" ), i18n("View for &reading"), this);
+    ac->addAction("view_preset_reading", d->aViewPresetReading );
+    connect( d->aViewPresetReading, SIGNAL(toggled(bool)), SLOT(slotViewPresetReading(bool)) );
+    //d->aViewPresetReading->setChecked( Okular::Settings::viewPresetReading() );
+
+    // View Preset: Book
     d->aViewPresetBook  = new KToggleAction(KIcon( "page-2sides" ), i18n("View like a &book"), this);
     ac->addAction("view_preset_book", d->aViewPresetBook );
     connect( d->aViewPresetBook, SIGNAL(toggled(bool)), SLOT(slotViewPresetBook(bool)) );
@@ -3461,6 +3469,12 @@ void PageView::updateZoomText()
 
 void PageView::updateViewPresets()
 {
+    // Reading
+    d->aViewPresetReading->setChecked(
+            d->zoomMode == ZoomFitWidth
+            && Okular::Settings::viewContinuous()
+            && Okular::Settings::viewMode() == Okular::Settings::EnumViewMode::Single);
+
     // Book
     d->aViewPresetBook->setChecked(
             d->zoomMode == ZoomFitPage
@@ -4153,6 +4167,10 @@ void PageView::slotViewPresetBook( bool on)
 {
     if (on)
     {
+        bool wasUpdatesEnabled = viewport()->updatesEnabled();
+        if ( wasUpdatesEnabled )
+            viewport()->setUpdatesEnabled( false );
+
         // zoom: Fit Page
         d->aZoomFitPage->setChecked(true);
 
@@ -4162,6 +4180,33 @@ void PageView::slotViewPresetBook( bool on)
         // view mode: facing, first centered
         slotViewMode(d->aViewModeList[(int)Okular::Settings::EnumViewMode::FacingFirstCentered]);
         d->aViewModeList[(int)Okular::Settings::EnumViewMode::FacingFirstCentered]->setChecked(true);
+
+        if ( wasUpdatesEnabled )
+            viewport()->setUpdatesEnabled( true );
+    }
+    updateViewPresets();
+}
+
+void PageView::slotViewPresetReading( bool on)
+{
+    if (on)
+    {
+        bool wasUpdatesEnabled = viewport()->updatesEnabled();
+        if ( wasUpdatesEnabled )
+            viewport()->setUpdatesEnabled( false );
+
+        // zoom: Fit Width
+        d->aZoomFitWidth->setChecked(true);
+
+        // continuous: on
+        d->aViewContinuous->setChecked(true);
+
+        // view mode: single
+        slotViewMode(d->aViewModeList[(int)Okular::Settings::EnumViewMode::Single]);
+        d->aViewModeList[(int)Okular::Settings::EnumViewMode::Single]->setChecked(true);
+
+        if ( wasUpdatesEnabled )
+            viewport()->setUpdatesEnabled( true );
     }
     updateViewPresets();
 }

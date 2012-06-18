@@ -227,6 +227,7 @@ Q_OBJECT
         void slotFitToTextToggled( bool );
         void slotViewMode( QAction *action );
         void slotContinuousToggled( bool );
+	void slotViewPresetReading( bool );
 	void slotViewPresetBook( bool );
         void slotSetMouseNormal();
         void slotSetMouseZoom();
