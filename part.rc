@@ -25,6 +25,8 @@
   <Menu name="view"><text>&amp;View</text>
     <Action name="presentation"/>
     <Separator/>
+    <Action name="view_preset_book"/>
+    <Separator/>
     <Action name="view_zoom_in"/>
     <Action name="view_zoom_out"/>
     <Action name="view_fit_to_width"/>

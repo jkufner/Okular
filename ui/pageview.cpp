@@ -30,6 +30,7 @@
 #include <qtooltip.h>
 #include <qapplication.h>
 #include <qclipboard.h>
+#include <qvector.h>
 
 #include <kaction.h>
 #include <kactionmenu.h>
@@ -195,7 +196,9 @@ public:
     KToggleAction * aZoomFitPage;
     KToggleAction * aZoomFitText;
     KActionMenu * aViewMode;
+    QVector<KAction *> aViewModeList;
     KToggleAction * aViewContinuous;
+    KToggleAction * aViewPresetBook;
     QAction * aPrevAction;
     KAction * aToggleForms;
     KAction * aSpeakDoc;
@@ -209,6 +212,7 @@ public:
 
 PageViewPrivate::PageViewPrivate( PageView *qq )
     : q( qq )
+    , aViewModeList(Okular::Settings::EnumViewMode::COUNT)
 {
 }
 
@@ -305,6 +309,7 @@ PageView::PageView( QWidget *parent, Okular::Document *document )
     d->aZoomFitText = 0;
     d->aViewMode = 0;
     d->aViewContinuous = 0;
+    d->aViewPresetBook = 0;
     d->aPrevAction = 0;
     d->aToggleForms = 0;
     d->aSpeakDoc = 0;
@@ -468,6 +473,7 @@ do { \
     vm->setCheckable( true ); \
     vm->setData( qVariantFromValue( id ) ); \
     d->aViewMode->addAction( vm ); \
+    d->aViewModeList[id] = (vm); \
     ac->addAction( name, vm ); \
     vmGroup->addAction( vm ); \
 } while( 0 )
@@ -492,6 +498,12 @@ do { \
     ac->addAction("view_continuous", d->aViewContinuous );
     connect( d->aViewContinuous, SIGNAL(toggled(bool)), SLOT(slotContinuousToggled(bool)) );
     d->aViewContinuous->setChecked( Okular::Settings::viewContinuous() );
+
+    // Book view preset
+    d->aViewPresetBook  = new KToggleAction(KIcon( "page-2sides" ), i18n("View like a &book"), this);
+    ac->addAction("view_preset_book", d->aViewPresetBook );
+    connect( d->aViewPresetBook, SIGNAL(toggled(bool)), SLOT(slotViewPresetBook(bool)) );
+    //d->aViewPresetBook->setChecked( Okular::Settings::viewPresetBook() );
 
     // Mouse mode actions for viewer mode
     d->mouseModeActionGroup = new QActionGroup( this );
@@ -3390,6 +3402,8 @@ void PageView::updateZoom( ZoomMode newZoomMode )
 
     d->aZoomIn->setEnabled( d->zoomFactor < 3.9 );
     d->aZoomOut->setEnabled( d->zoomFactor > 0.2 );
+
+    updateViewPresets();
 }
 
 void PageView::updateZoomText()
@@ -3443,6 +3457,15 @@ void PageView::updateZoomText()
     d->aZoom->setCurrentItem( selIdx );
     d->aZoom->setEnabled( d->items.size() > 0 );
     d->aZoom->selectableActionGroup()->setEnabled( d->items.size() > 0 );
+}
+
+void PageView::updateViewPresets()
+{
+    // Book
+    d->aViewPresetBook->setChecked(
+            d->zoomMode == ZoomFitPage
+            && !Okular::Settings::viewContinuous()
+            && Okular::Settings::viewMode() == Okular::Settings::EnumViewMode::FacingFirstCentered);
 }
 
 void PageView::updateCursor( const QPoint &p )
@@ -4110,6 +4133,7 @@ void PageView::slotViewMode( QAction *action )
         Okular::Settings::self()->writeConfig();
         if ( d->document->pages() > 0 )
             slotRelayoutPages();
+        updateViewPresets();
     }
 }
 
@@ -4121,7 +4145,25 @@ void PageView::slotContinuousToggled( bool on )
         Okular::Settings::self()->writeConfig();
         if ( d->document->pages() > 0 )
             slotRelayoutPages();
+        updateViewPresets();
     }
+}
+
+void PageView::slotViewPresetBook( bool on)
+{
+    if (on)
+    {
+        // zoom: Fit Page
+        d->aZoomFitPage->setChecked(true);
+
+        // continuous: off
+        d->aViewContinuous->setChecked(false);
+
+        // view mode: facing, first centered
+        slotViewMode(d->aViewModeList[(int)Okular::Settings::EnumViewMode::FacingFirstCentered]);
+        d->aViewModeList[(int)Okular::Settings::EnumViewMode::FacingFirstCentered]->setChecked(true);
+    }
+    updateViewPresets();
 }
 
 void PageView::slotSetMouseNormal()

@@ -176,6 +176,8 @@ Q_OBJECT
         // update the text on the label using global zoom value or current page's one
         void updateZoomText();
         void textSelectionClear();
+	// update view presets
+	void updateViewPresets();
         // updates cursor
         void updateCursor( const QPoint &p );
 
@@ -225,6 +227,7 @@ Q_OBJECT
         void slotFitToTextToggled( bool );
         void slotViewMode( QAction *action );
         void slotContinuousToggled( bool );
+	void slotViewPresetBook( bool );
         void slotSetMouseNormal();
         void slotSetMouseZoom();
         void slotSetMouseSelect();
