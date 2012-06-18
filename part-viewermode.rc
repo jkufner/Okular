@@ -20,6 +20,10 @@
   <Action name="mouse_drag" group="viewer_menu_merge"/>
   <Action name="mouse_zoom" group="viewer_menu_merge"/>
   <Separator group="viewer_menu_merge"/>
+  <Action name="view_preset_reading" group="viewer_menu_merge"/>
+  <Action name="view_preset_book" group="viewer_menu_merge"/>
+  <Action name="view_preset_presentation_overview" group="viewer_menu_merge"/>
+  <Separator group="viewer_menu_merge"/>
   <Action name="view_zoom_in" group="viewer_menu_merge"/>
   <Action name="view_zoom_out" group="viewer_menu_merge"/>
   <Action name="view_fit_to_width" group="viewer_menu_merge"/>
@@ -65,6 +69,10 @@
   <Action name="zoom_to" />
   <Action name="view_zoom_out"/>
   <Action name="view_zoom_in"/>
+  <Separator/>
+  <Action name="view_preset_reading"/>
+  <Action name="view_preset_book"/>
+  <Action name="view_preset_presentation_overview"/>
   <Separator/>
   <Action name="mouse_drag"/>
   <Action name="mouse_zoom"/>
