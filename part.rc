@@ -27,6 +27,7 @@
     <Separator/>
     <Action name="view_preset_reading"/>
     <Action name="view_preset_book"/>
+    <Action name="view_preset_presentation_overview"/>
     <Separator/>
     <Action name="view_zoom_in"/>
     <Action name="view_zoom_out"/>

@@ -176,8 +176,6 @@ Q_OBJECT
         // update the text on the label using global zoom value or current page's one
         void updateZoomText();
         void textSelectionClear();
-	// update view presets
-	void updateViewPresets();
         // updates cursor
         void updateCursor( const QPoint &p );
 
@@ -229,6 +227,7 @@ Q_OBJECT
         void slotContinuousToggled( bool );
 	void slotViewPresetReading( bool );
 	void slotViewPresetBook( bool );
+	void slotViewPresetPresentationOverview( bool );
         void slotSetMouseNormal();
         void slotSetMouseZoom();
         void slotSetMouseSelect();
@@ -250,6 +249,10 @@ Q_OBJECT
         void slotStopSpeaks();
         void slotAction( Okular::Action *action );
         void externalKeyPressEvent( QKeyEvent *e );
+
+	// update view presets
+	void updateViewPresets();
+	void updateViewPresetsReal();
 };
 
 #endif

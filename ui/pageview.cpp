@@ -200,6 +200,7 @@ public:
     KToggleAction * aViewContinuous;
     KToggleAction * aViewPresetReading;
     KToggleAction * aViewPresetBook;
+    KToggleAction * aViewPresetPresentationOverview;
     QAction * aPrevAction;
     KAction * aToggleForms;
     KAction * aSpeakDoc;
@@ -209,6 +210,8 @@ public:
     QActionGroup * mouseModeActionGroup;
 
     int setting_viewCols;
+
+    bool viewPresetFreeze;
 };
 
 PageViewPrivate::PageViewPrivate( PageView *qq )
@@ -312,6 +315,8 @@ PageView::PageView( QWidget *parent, Okular::Document *document )
     d->aViewContinuous = 0;
     d->aViewPresetReading = 0;
     d->aViewPresetBook = 0;
+    d->aViewPresetPresentationOverview = 0;
+    d->viewPresetFreeze = false;
     d->aPrevAction = 0;
     d->aToggleForms = 0;
     d->aSpeakDoc = 0;
@@ -512,6 +517,12 @@ do { \
     ac->addAction("view_preset_book", d->aViewPresetBook );
     connect( d->aViewPresetBook, SIGNAL(toggled(bool)), SLOT(slotViewPresetBook(bool)) );
     //d->aViewPresetBook->setChecked( Okular::Settings::viewPresetBook() );
+
+    // View Preset: Presentation overview
+    d->aViewPresetPresentationOverview  = new KToggleAction(KIcon( "page-3sides" ), i18n("Show &presentation overview"), this);
+    ac->addAction("view_preset_presentation_overview", d->aViewPresetPresentationOverview );
+    connect( d->aViewPresetPresentationOverview, SIGNAL(toggled(bool)), SLOT(slotViewPresetPresentationOverview(bool)) );
+    //d->aViewPresetPresentationOverview->setChecked( Okular::Settings::viewPresetPresentationOverview() );
 
     // Mouse mode actions for viewer mode
     d->mouseModeActionGroup = new QActionGroup( this );
@@ -3469,6 +3480,17 @@ void PageView::updateZoomText()
 
 void PageView::updateViewPresets()
 {
+    QMetaObject::invokeMethod(this, "updateViewPresetsReal", Qt::QueuedConnection);
+}
+
+void PageView::updateViewPresetsReal()
+{
+    if (d->viewPresetFreeze)
+        return;
+
+    // Anti-cyclink flag, when something goes wrong
+    d->viewPresetFreeze = true;
+
     // Reading
     d->aViewPresetReading->setChecked(
             d->zoomMode == ZoomFitWidth
@@ -3480,6 +3502,14 @@ void PageView::updateViewPresets()
             d->zoomMode == ZoomFitPage
             && !Okular::Settings::viewContinuous()
             && Okular::Settings::viewMode() == Okular::Settings::EnumViewMode::FacingFirstCentered);
+
+    // Presentation overview
+    d->aViewPresetPresentationOverview->setChecked(
+            d->zoomMode == ZoomFitWidth
+            && Okular::Settings::viewContinuous()
+            && Okular::Settings::viewMode() == Okular::Settings::EnumViewMode::Summary);
+
+    d->viewPresetFreeze = false;
 }
 
 void PageView::updateCursor( const QPoint &p )
@@ -4163,14 +4193,13 @@ void PageView::slotContinuousToggled( bool on )
     }
 }
 
-void PageView::slotViewPresetBook( bool on)
+void PageView::slotViewPresetBook( bool on )
 {
+    if (d->viewPresetFreeze)
+        return;
+
     if (on)
     {
-        bool wasUpdatesEnabled = viewport()->updatesEnabled();
-        if ( wasUpdatesEnabled )
-            viewport()->setUpdatesEnabled( false );
-
         // zoom: Fit Page
         d->aZoomFitPage->setChecked(true);
 
@@ -4180,21 +4209,17 @@ void PageView::slotViewPresetBook( bool on)
         // view mode: facing, first centered
         slotViewMode(d->aViewModeList[(int)Okular::Settings::EnumViewMode::FacingFirstCentered]);
         d->aViewModeList[(int)Okular::Settings::EnumViewMode::FacingFirstCentered]->setChecked(true);
-
-        if ( wasUpdatesEnabled )
-            viewport()->setUpdatesEnabled( true );
     }
     updateViewPresets();
 }
 
-void PageView::slotViewPresetReading( bool on)
+void PageView::slotViewPresetReading( bool on )
 {
+    if (d->viewPresetFreeze)
+        return;
+
     if (on)
     {
-        bool wasUpdatesEnabled = viewport()->updatesEnabled();
-        if ( wasUpdatesEnabled )
-            viewport()->setUpdatesEnabled( false );
-
         // zoom: Fit Width
         d->aZoomFitWidth->setChecked(true);
 
@@ -4204,9 +4229,26 @@ void PageView::slotViewPresetReading( bool on)
         // view mode: single
         slotViewMode(d->aViewModeList[(int)Okular::Settings::EnumViewMode::Single]);
         d->aViewModeList[(int)Okular::Settings::EnumViewMode::Single]->setChecked(true);
+    }
+    updateViewPresets();
+}
 
-        if ( wasUpdatesEnabled )
-            viewport()->setUpdatesEnabled( true );
+void PageView::slotViewPresetPresentationOverview( bool on )
+{
+    if (d->viewPresetFreeze)
+        return;
+
+    if (on)
+    {
+        // zoom: Fit Width
+        d->aZoomFitWidth->setChecked(true);
+
+        // continuous: on
+        d->aViewContinuous->setChecked(true);
+
+        // view mode: single
+        slotViewMode(d->aViewModeList[(int)Okular::Settings::EnumViewMode::Summary]);
+        d->aViewModeList[(int)Okular::Settings::EnumViewMode::Summary]->setChecked(true);
     }
     updateViewPresets();
 }
